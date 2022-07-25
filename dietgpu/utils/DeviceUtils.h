@@ -9,7 +9,7 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <glog/logging.h>
+#include "glog/logging.h"
 #include <string>
 #include <vector>
 
