@@ -1,5 +1,3 @@
-#find_package(Torch REQUIRED)
-
 add_library(dietgpu SHARED
   DietGpu.cpp
 )
@@ -12,5 +10,5 @@ target_link_libraries(dietgpu PRIVATE
 )
 target_include_directories(dietgpu PRIVATE
   $<BUILD_INTERFACE:${dietgpu_SOURCE_DIR}>
-  "" #"${TORCH_INCLUDE_DIRS}"
+  ""
 )
