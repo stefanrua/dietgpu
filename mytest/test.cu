@@ -1,8 +1,12 @@
-#include <stdio.h>
-#include <time.h>
+#include <cstdio>
+#include <ctime>
+
 #include <cuda_runtime.h>
+
 #include "../dietgpu/ans/GpuANSCodec.h"
 #include "../dietgpu/utils/StackDeviceMemory.h"
+
+#include "cudaCheck.h"
 
 int n_print = 1;
 
@@ -42,11 +46,11 @@ int compress(const void* in, const uint32_t* insize, void* out, uint32_t* outsiz
     cudaStream_t stream;
 
     uint32_t maxsize = dietgpu::getMaxCompressedSize(*insize);
-    cudaStreamCreate(&stream);
-    cudaMalloc(in_dgpu, *insize);
-    cudaMalloc(out_dgpu, maxsize);
-    cudaMalloc(&outSize_dev, sizeof(uint32_t));
-    cudaMemcpy(in_dgpu, in, *insize, cudaMemcpyHostToDevice);
+    CUDA_CHECK(cudaStreamCreate(&stream));
+    CUDA_CHECK(cudaMalloc(in_dgpu, *insize));
+    CUDA_CHECK(cudaMalloc(out_dgpu, maxsize));
+    CUDA_CHECK(cudaMalloc(&outSize_dev, sizeof(uint32_t)));
+    CUDA_CHECK(cudaMemcpy(in_dgpu, in, *insize, cudaMemcpyHostToDevice));
 
     int device = 0;
     size_t allocPerDevice = maxsize;
@@ -68,12 +72,12 @@ int compress(const void* in, const uint32_t* insize, void* out, uint32_t* outsiz
             stream);
     t = clock() - t;
 
-    cudaMemcpy(outsize, outSize_dev, sizeof(uint32_t), cudaMemcpyDeviceToHost);
-    cudaMemcpy(out, *out_dgpu, *outsize, cudaMemcpyDeviceToHost);
+    CUDA_CHECK(cudaMemcpy(outsize, outSize_dev, sizeof(uint32_t), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(out, *out_dgpu, *outsize, cudaMemcpyDeviceToHost));
 
-    cudaFree(*in_dgpu);
-    cudaFree(*out_dgpu);
-    cudaFree(outSize_dev);
+    CUDA_CHECK(cudaFree(*in_dgpu));
+    CUDA_CHECK(cudaFree(*out_dgpu));
+    CUDA_CHECK(cudaFree(outSize_dev));
 
     return t;
 }
