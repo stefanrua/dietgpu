@@ -47,16 +47,16 @@ int compress(const void* in, const uint32_t* insize, void* out, uint32_t* outsiz
 
     uint32_t maxsize = dietgpu::getMaxCompressedSize(*insize);
     CUDA_CHECK(cudaStreamCreate(&stream));
-    CUDA_CHECK(cudaMalloc(in_dgpu, *insize));
-    CUDA_CHECK(cudaMalloc(out_dgpu, maxsize));
-    CUDA_CHECK(cudaMalloc(&outSize_dev, sizeof(uint32_t)));
-    CUDA_CHECK(cudaMemcpy(in_dgpu, in, *insize, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMalloc(& in_dgpu[0], *insize));
+    CUDA_CHECK(cudaMalloc(& out_dgpu[0], maxsize));
+    CUDA_CHECK(cudaMalloc(& outSize_dev, sizeof(uint32_t)));
+    CUDA_CHECK(cudaMemcpy(in_dgpu[0], in, *insize, cudaMemcpyHostToDevice));
 
     int device = 0;
     size_t allocPerDevice = maxsize;
     auto res = dietgpu::StackDeviceMemory(device, allocPerDevice);
     numInBatch = 1;
-    *inSize = *insize;
+    inSize[0] = *insize;
     histogram_dev = nullptr;
 
     int t = clock();
@@ -73,10 +73,10 @@ int compress(const void* in, const uint32_t* insize, void* out, uint32_t* outsiz
     t = clock() - t;
 
     CUDA_CHECK(cudaMemcpy(outsize, outSize_dev, sizeof(uint32_t), cudaMemcpyDeviceToHost));
-    CUDA_CHECK(cudaMemcpy(out, *out_dgpu, *outsize, cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(out, out_dgpu[0], *outsize, cudaMemcpyDeviceToHost));
 
-    CUDA_CHECK(cudaFree(*in_dgpu));
-    CUDA_CHECK(cudaFree(*out_dgpu));
+    CUDA_CHECK(cudaFree(in_dgpu[0]));
+    CUDA_CHECK(cudaFree(out_dgpu[0]));
     CUDA_CHECK(cudaFree(outSize_dev));
 
     return t;
