@@ -15,7 +15,7 @@ void print() {
     n_print++;
 }
 
-int compress(const void* in, const uint32_t* insize, void* out, uint32_t* outsize) {
+int compress(const void* in, uint32_t insize, void* out, uint32_t& outsize) {
     //dietgpu::StackDeviceMemory res;
     // Compression configuration
     auto config = dietgpu::ANSCodecConfig();
@@ -45,18 +45,18 @@ int compress(const void* in, const uint32_t* insize, void* out, uint32_t* outsiz
     // stream on the current device on which this runs
     cudaStream_t stream;
 
-    uint32_t maxsize = dietgpu::getMaxCompressedSize(*insize);
+    uint32_t maxsize = dietgpu::getMaxCompressedSize(insize);
     CUDA_CHECK(cudaStreamCreate(&stream));
-    CUDA_CHECK(cudaMalloc(& in_dgpu[0], *insize));
+    CUDA_CHECK(cudaMalloc(& in_dgpu[0], insize));
     CUDA_CHECK(cudaMalloc(& out_dgpu[0], maxsize));
     CUDA_CHECK(cudaMalloc(& outSize_dev, sizeof(uint32_t)));
-    CUDA_CHECK(cudaMemcpy(in_dgpu[0], in, *insize, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(in_dgpu[0], in, insize, cudaMemcpyHostToDevice));
 
     int device = 0;
     size_t allocPerDevice = maxsize;
     auto res = dietgpu::StackDeviceMemory(device, allocPerDevice);
     numInBatch = 1;
-    inSize[0] = *insize;
+    inSize[0] = insize;
     histogram_dev = nullptr;
 
     int t = clock();
@@ -72,8 +72,8 @@ int compress(const void* in, const uint32_t* insize, void* out, uint32_t* outsiz
             stream);
     t = clock() - t;
 
-    CUDA_CHECK(cudaMemcpy(outsize, outSize_dev, sizeof(uint32_t), cudaMemcpyDeviceToHost));
-    CUDA_CHECK(cudaMemcpy(out, out_dgpu[0], *outsize, cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(&outsize, outSize_dev, sizeof(uint32_t), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(out, out_dgpu[0], outsize, cudaMemcpyDeviceToHost));
 
     CUDA_CHECK(cudaFree(in_dgpu[0]));
     CUDA_CHECK(cudaFree(out_dgpu[0]));
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
     fread(orig, origsize, 1, fp);
     fclose(fp);
 
-    t = compress(orig, &origsize, comp, &compsize);
+    t = compress(orig, origsize, comp, compsize);
 
     /* t = clock();
     compress(orig, &origsize, comp, &compsize);
