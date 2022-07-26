@@ -59,6 +59,17 @@ int compress(const void* in, uint32_t insize, void* out, uint32_t& outsize) {
     inSize[0] = insize;
     histogram_dev = nullptr;
 
+    // warmup run (is this cheating?)
+    dietgpu::ansEncodeBatchPointer(
+            res,
+            config,
+            numInBatch,
+            (const void**)in_dgpu,
+            inSize,
+            histogram_dev,
+            out_dgpu,
+            outSize_dev,
+            stream);
     int t = clock();
     dietgpu::ansEncodeBatchPointer(
             res,
@@ -132,7 +143,7 @@ int main(int argc, char* argv[]) {
     printf("insize: %u\n", origsize);
     printf("outsize: %u\n", compsize);
     printf("ratio: %f\n", (float)compsize/origsize);
-    printf("throughput (comp): %f MB/s\n", (float)origsize/t * CLOCKS_PER_SEC/1000000);
+    printf("throughput (comp): %f GB/s\n", (float)origsize/t * CLOCKS_PER_SEC/1000000000);
 
     free(orig);
     free(comp);
